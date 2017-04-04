@@ -1,0 +1,23 @@
+sap.ui.define([
+		'jquery.sap.global',
+		'sap/ui/core/mvc/Controller',
+		'sap/ui/model/json/JSONModel'
+	], function(jQuery, Controller, JSONModel) {
+	"use strict";
+
+	var ListController = Controller.extend("sap.m.sample.ListFilterBinding.List", {
+
+		onInit : function (evt) {
+			// set explored app's demo model on this sample
+			var oModel = new JSONModel(jQuery.sap.getModulePath("sap.ui.demo.mock", "/products.json"));
+			this.getView().setModel(oModel);
+			// set view control model for filter value binding
+			var oViewModel = new JSONModel({"Category": "Laptops"});
+			this.getView().setModel(oViewModel, "ViewControl");
+		}
+	});
+
+
+	return ListController;
+
+});

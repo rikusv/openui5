@@ -578,7 +578,8 @@
 			"sap.m.sample.ListSelectionSearch",
 			"sap.m.sample.ListSwipe",
 			"sap.m.sample.ListToolbar",
-			"sap.m.sample.ListUnread"
+			"sap.m.sample.ListUnread",
+			"sap.m.sample.ListFilterBinding"
 		  ]
 		},
 		{
@@ -2165,6 +2166,11 @@
 		  "id": "sap.m.sample.ListUnread",
 		  "name": "List - Unread Indication",
 		  "description": "With the Unread Indicator you can highlight new items making it easier for the user to discover them."
+		},
+		{
+		  "id": "sap.m.sample.ListFilterBinding",
+		  "name": "List - Dynamic Filter Binding in View",
+		  "description": "Filter values can be bound to separate model properties in the view."
 		},
 		{
 		  "id": "sap.m.sample.ListNavType",
