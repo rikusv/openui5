@@ -3648,6 +3648,73 @@ sap.ui.define([
 			delete oBindingInfo.modelRefreshHandler;
 		}
 
+		var oBindings = {}, oObject = this;
+
+		/*
+		* Check filter value1 and process it if property binding is used.
+		* Add property oValue1BindingInfo to filter.
+		* e.g. in view "{path: 'Category', operator: 'EQ', value1: '{ViewControl>/Category}'}"
+		*/
+		function processFilter(oFilter) {
+		  if (oFilter.oValue1.match(/\{.*\}/)) {
+		    oFilter.oValue1BindingInfo = sap.ui.base.BindingParser.simpleParser(oFilter.oValue1);
+		    if (oObject.getModel(oFilter.oValue1BindingInfo.model)) {
+					// model already set
+		      setFilterValueBinding(oObject, oFilter);
+		    } else {
+					// model not yet set; try again when context changed
+		      oObject.attachModelContextChange(
+		        oFilter,
+		        function(oEvent, oFilter) {
+		          var oObject = this;
+							processFilter(oFilter);
+		          // setFilterValueBinding(oObject, oFilter);
+		        }
+		      );
+		    }
+		  }
+		  if (oFilter.oValue1Binding) {
+				// Binding ready - set fixed value
+		    oFilter.oValue1 = oFilter.oValue1Binding.getModel().getProperty(
+					oFilter.oValue1Binding.getPath()
+				);
+				// reset fnTest (this seems like cheating...)
+		    oFilter.fnTest = null;
+		  }
+		}
+
+		/*
+		* Loop through filters and process non-MultiFilters for possible property binding
+		*/
+		function processFilters(aFilters) {
+		  for (var i = 0; i < aFilters.length; i++) {
+		    if (aFilters[i]._bMultiFilter) {
+		      processFilters(aFilters[i].aFilters);
+		    } else {
+		      processFilter(aFilters[i]);
+		    }
+		  }
+		}
+
+		/*
+		* Set binding on filter once model is available.
+		* Binding is set as property oValue1Binding on filter.
+		*/
+		function setFilterValueBinding(oObject, oFilter) {
+			// Keep binding as property on filter
+	    oFilter.oValue1Binding = new sap.ui.model.PropertyBinding(
+				oObject.getModel(oFilter.oValue1BindingInfo.model),
+				oFilter.oValue1BindingInfo.path
+			);
+			// Listen for changes the the bound property and update the filter.
+			oFilter.oValue1Binding.attachChange(
+				function() {
+					processFilters(oBindingInfo.filters);
+					oObject.getBinding(sName).filter(oBindingInfo.filters, "Application");
+				}
+			);
+		}
+
 		// create property and aggregation bindings if they don't exist yet
 		for ( sName in this.mBindingInfos ) {
 
@@ -3661,6 +3728,9 @@ sap.ui.define([
 			// if there is no binding and if all required information is available, create a binding object
 			if ( !oBindingInfo.binding && canCreate(oBindingInfo) ) {
 				if (oBindingInfo.factory) {
+					if (oBindingInfo.filters) {
+						processFilters(oBindingInfo.filters);
+					}
 					this._bindAggregation(sName, oBindingInfo);
 				} else {
 					this._bindProperty(sName, oBindingInfo);
